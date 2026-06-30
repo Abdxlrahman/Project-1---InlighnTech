@@ -1,0 +1,82 @@
+================================================================================
+  ENDPOINT SECURITY HARDENING — PRE-HARDENING PORT ASSESSMENT
+  CIS Benchmarks Baseline | Project 1 | Defensive Cybersecurity
+================================================================================
+
+  Scan Type     : Pre-Hardening TCP Listening Port Inventory
+  Host          : DESKTOP-WIN11 (192.168.1.10)
+  Scan Date     : 2026-06-05 | 09:14:32 IST
+  Tool          : PowerShell — Get-NetTCPConnection
+  Scan Command  : Get-NetTCPConnection -State Listen | Select-Object LocalAddress, LocalPort, OwningProcess | Sort-Object LocalPort | Format-Table -AutoSize
+  Purpose       : Establish baseline of exposed network attack surface BEFORE hardening
+
+================================================================================
+  RAW PORT DATA
+================================================================================
+
+LocalAddress          LocalPort   OwningProcess   Service / Protocol      Risk
+--------------------  ---------   -------------   ----------------------  --------
+0.0.0.0                     135          1668      RPC (Remote Procedure   MEDIUM
+                                                   Call Endpoint Mapper)
+192.168.1.10                139             4      NetBIOS Session Svc     MEDIUM
+0.0.0.0                    5040         10224      WSD API (Windows)       LOW
+0.0.0.0                   49664          1356      Windows Service Host    LOW
+0.0.0.0                   49665          1184      Windows Service Host    LOW
+0.0.0.0                   49668          3336      Windows Service Host    LOW
+0.0.0.0                   49669          3424      Windows Service Host    LOW
+0.0.0.0                   49670          4268      Windows Service Host    LOW
+0.0.0.0                   49682          1328      Windows Service Host    LOW
+127.0.0.1                 12753         20196      Internal Loopback Svc   INFO
+127.0.0.1                 45823         16104      Internal Loopback Svc   INFO
+127.0.0.1                 56634          8096      Internal Loopback Svc   INFO
+127.0.0.1                 64595         24660      Internal Loopback Svc   INFO
+127.0.0.1                 64596         24660      Internal Loopback Svc   INFO
+::                           135          1668      RPC (IPv6)              MEDIUM
+::                           445             4      SMB / File Sharing      MEDIUM
+::                          5357             4      WSDAPI (IPv6)           LOW
+::                         49664          1356      Windows Service Host    LOW
+::                         49665          1184      Windows Service Host    LOW
+::                         49668          3336      Windows Service Host    LOW
+::                         49669          3424      Windows Service Host    LOW
+::                         49670          4268      Windows Service Host    LOW
+::                         49682          1328      Windows Service Host    LOW
+::1                         42050          9652      Loopback (IPv6)         INFO
+::1                         49673          4768      Loopback (IPv6)         INFO
+
+================================================================================
+  PRE-HARDENING RISK ANALYSIS SUMMARY
+================================================================================
+
+  Total Listening Sockets   : 25
+  MEDIUM Risk Ports         : 4  (135/RPC, 139/NetBIOS, 445/SMB — x2 IPv4+IPv6)
+  LOW Risk Ports            : 14 (Ephemeral Windows Service Host ports)
+  INFO (Loopback only)      : 7  (127.0.0.1 / ::1 — no external exposure)
+
+  HIGH CONCERN FINDINGS:
+  ──────────────────────
+  [MEDIUM] Port 135 — Microsoft RPC Endpoint Mapper
+    → Binding: 0.0.0.0 (ALL INTERFACES) and :: (ALL IPv6)
+    → Risk: Exposed to network; historically targeted (MS03-026, MS03-039)
+    → Action Required: Firewall block inbound
+
+  [MEDIUM] Port 139 — NetBIOS Session Service
+    → Binding: 192.168.1.10 (LAN Interface Specific)
+    → Risk: Legacy protocol; enables NBNS poisoning and SMB relay attacks
+    → Action Required: Firewall block inbound
+
+  [MEDIUM] Port 445 — SMB (Server Message Block)
+    → Binding: :: (ALL IPv6 interfaces)
+    → Risk: EternalBlue-class exploits (CVE-2017-0144); WannaCry vector
+    → Action Required: Firewall block inbound; verify patch status
+
+  HARDENING VERDICT (PRE): ❌ SYSTEM IS NOT HARDENED
+  ──────────────────────────────────────────────────
+  The system exposes critical network services (RPC, SMB, NetBIOS)
+  on all interfaces with no inbound blocking policy applied.
+  Firewall profiles have not been verified as enforcing block.
+  RemoteRegistry service state: RUNNING (attack vector active).
+  RDP registry flag: NOT confirmed as denied (fDenyTSConnections unknown).
+
+================================================================================
+  END OF PRE-HARDENING SCAN REPORT
+================================================================================
